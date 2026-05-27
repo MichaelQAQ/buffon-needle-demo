@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>布丰投针问题：用概率听见 π</title>
+<style>
+:root{
+  --ink:#24170f;
+  --brown:#5b3a24;
+  --gold:#c99b43;
+  --gold2:#e8c978;
+  --cream:#f7efd9;
+  --paper:#fff8e8;
+  --wine:#6f1d1b;
+  --green:#243d2a;
+  --shadow:rgba(55,32,10,.22);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  color:var(--ink);
+  font-family:"Georgia","Times New Roman","Noto Serif SC","Songti SC",serif;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(232,201,120,.35), transparent 28%),
+    radial-gradient(circle at 85% 15%, rgba(111,29,27,.18), transparent 30%),
+    linear-gradient(135deg,#21150d 0%,#3a2417 28%,#78542d 100%);
+  min-height:100vh;
+}
+.page{
+  width:min(1180px,94vw);
+  margin:28px auto;
+  background:
+    linear-gradient(rgba(255,248,232,.94),rgba(255,248,232,.94)),
+    repeating-linear-gradient(90deg,rgba(91,58,36,.05) 0 1px, transparent 1px 14px);
+  border:10px double var(--gold);
+  border-radius:28px;
+  box-shadow:0 26px 70px rgba(0,0,0,.35);
+  overflow:hidden;
+}
+.hero{
+  position:relative;
+  padding:42px 46px 28px;
+  background:
+    linear-gradient(120deg,rgba(36,23,15,.92),rgba(91,58,36,.82)),
+    radial-gradient(circle at 50% 0%,rgba(232,201,120,.35),transparent 45%);
+  color:#fff4d6;
+}
+.hero:before,.hero:after{
+  content:"𝄞";
+  position:absolute;
+  font-size:90px;
+  opacity:.13;
+  color:var(--gold2);
+}
+.hero:before{right:42px;top:18px}
+.hero:after{left:36px;bottom:-12px;transform:rotate(-12deg)}
+.kicker{
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--gold2);
+  font-size:14px;
+}
+h1{
+  margin:10px 0 10px;
+  font-size:clamp(32px,5vw,58px);
+  line-height:1.05;
+}
+.subtitle{
+  max-width:880px;
+  font-size:20px;
+  line-height:1.75;
+  margin:0;
+}
+.formula-badge{
+  display:inline-block;
+  margin-top:24px;
+  padding:12px 18px;
+  border:1px solid rgba(232,201,120,.75);
+  border-radius:999px;
+  background:rgba(0,0,0,.24);
+  color:#fff8e8;
+  font-size:22px;
+  box-shadow:inset 0 0 18px rgba(232,201,120,.12);
+}
+.content{
+  padding:34px 38px 46px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1.05fr .95fr;
+  gap:26px;
+}
+.card{
+  background:rgba(255,255,255,.58);
+  border:1px solid rgba(91,58,36,.2);
+  border-radius:22px;
+  box-shadow:0 14px 32px var(--shadow);
+  padding:24px;
+  position:relative;
+}
+.card:before{
+  content:"";
+  position:absolute;
+  inset:10px;
+  border:1px solid rgba(201,155,67,.28);
+  border-radius:16px;
+  pointer-events:none;
+}
+h2{
+  margin:0 0 14px;
+  font-size:28px;
+  color:var(--wine);
+}
+h3{
+  margin:20px 0 8px;
+  font-size:20px;
+  color:var(--brown);
+}
+p,li{
+  font-size:17px;
+  line-height:1.75;
+}
+.math{
+  font-family:"Times New Roman",serif;
+  background:#fff4d6;
+  border-left:5px solid var(--gold);
+  padding:12px 16px;
+  border-radius:12px;
+  font-size:21px;
+  margin:12px 0;
+}
+.stage{
+  position:relative;
+  height:440px;
+  background:
+    linear-gradient(90deg,rgba(36,23,15,.05) 0 1px,transparent 1px 100%),
+    linear-gradient(#fdf6e7,#f3e4c5);
+  border:2px solid rgba(91,58,36,.35);
+  border-radius:20px;
+  overflow:hidden;
+}
+.line{
+  position:absolute;
+  left:0;right:0;
+  height:3px;
+  background:linear-gradient(90deg,transparent,var(--brown),transparent);
+  opacity:.78;
+}
+.needle{
+  position:absolute;
+  width:110.5px;
+  height:6px;
+  background:linear-gradient(90deg,#5a201c,#d9b45e,#5a201c);
+  border-radius:99px;
+  left:50%;
+  top:50%;
+  transform-origin:center;
+  box-shadow:0 4px 10px rgba(0,0,0,.22);
+}
+.needle.hit{
+  box-shadow:0 0 0 6px rgba(111,29,27,.16),0 0 28px rgba(111,29,27,.55);
+}
+.center-dot{
+  position:absolute;
+  width:12px;height:12px;border-radius:50%;
+  background:var(--wine);
+  left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  z-index:3;
+}
+.projection{
+  position:absolute;
+  width:3px;
+  background:rgba(111,29,27,.55);
+  left:50%;
+  top:50%;
+  transform-origin:bottom;
+}
+.controls{
+  display:grid;
+  gap:16px;
+  margin-top:18px;
+}
+.control-row{
+  display:grid;
+  grid-template-columns:110px 1fr 72px;
+  align-items:center;
+  gap:12px;
+  font-size:16px;
+}
+input[type=range]{
+  width:100%;
+  accent-color:var(--wine);
+}
+.result{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:16px;
+}
+.result div{
+  background:#fff2cf;
+  border:1px solid rgba(201,155,67,.45);
+  border-radius:14px;
+  padding:12px;
+  text-align:center;
+}
+.result strong{
+  display:block;
+  font-size:21px;
+  color:var(--wine);
+}
+button{
+  border:0;
+  background:linear-gradient(135deg,var(--wine),#9b4a2f);
+  color:#fff8e8;
+  padding:12px 18px;
+  border-radius:999px;
+  cursor:pointer;
+  font-family:inherit;
+  font-size:16px;
+  box-shadow:0 8px 18px rgba(111,29,27,.25);
+}
+button.secondary{
+  background:linear-gradient(135deg,var(--green),#496841);
+}
+.sim-area{
+  height:310px;
+  border-radius:18px;
+  border:1px solid rgba(91,58,36,.28);
+  background:#fcf2d9;
+  position:relative;
+  overflow:hidden;
+}
+.sim-line{
+  position:absolute;
+  left:0;right:0;
+  height:2px;
+  background:rgba(91,58,36,.5);
+}
+.sim-needle{
+  position:absolute;
+  height:3px;
+  width:42px;
+  border-radius:99px;
+  background:#6f1d1b;
+  transform-origin:center;
+}
+.sim-needle.miss{background:#243d2a;opacity:.75}
+.two-col{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:22px;
+  margin-top:26px;
+}
+.step{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  margin:15px 0;
+}
+.num{
+  flex:0 0 38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:var(--wine);
+  color:#fff8e8;
+  font-weight:bold;
+}
+.footer{
+  margin-top:26px;
+  padding:24px;
+  border-radius:20px;
+  background:linear-gradient(135deg,#2b1b11,#5b3a24);
+  color:#fff1cf;
+}
+.small{
+  font-size:14px;
+  opacity:.85;
+}
+@media(max-width:900px){
+  .grid,.two-col{grid-template-columns:1fr}
+  .hero{padding:34px 26px}
+  .content{padding:26px 20px}
+  .result{grid-template-columns:1fr}
+}
+</style>
+
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(', '\\)']],
+    displayMath: [['\\[', '\\]']]
+  },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+<div class="page">
+  <section class="hero">
+    <div class="kicker">Buffon's Needle · Probability · π</div>
+    <h1>布丰投针问题：<br>一根针怎样“听见”圆周率？</h1>
+    <p class="subtitle">在一组间距为 <b>d</b> 的平行线之间，随机投下一根长度为 <b>l</b> 且 <b>l&lt;d</b> 的针。它碰到某条平行线的概率是多少？</p>
+    <div class="formula-badge">结论：\(P=\dfrac{2l}{\pi d}\)</div>
+  </section>
+
+  <main class="content">
+    <div class="grid">
+      <section class="card">
+        <h2>一、核心图像：针、角度、距离</h2>
+        <p>拖动下面两个滑块，观察针是否碰到平行线。现在图中的针长与判定公式已严格统一：视觉长度就是 \(l=0.65d\)。这里的关键不是针在平面上的具体位置，而是两个变量：</p>
+        <div class="math">\(x\)：针的中心到最近平行线的距离，\(0\le x\le \dfrac d2\)</div>
+        <div class="math">\(\theta\)：针与平行线的夹角，\(0\le \theta\le \dfrac{\pi}{2}\)</div>
+
+        <div class="stage" id="stage">
+          <div class="needle" id="needle"></div>
+          <div class="projection" id="projection"></div>
+          <div class="center-dot"></div>
+        </div>
+
+        <div class="controls">
+          <div class="control-row">
+            <label>角度 θ</label>
+            <input id="angle" type="range" min="0" max="90" value="42">
+            <span id="angleVal">42°</span>
+          </div>
+          <div class="control-row">
+            <label>距离 x</label>
+            <input id="dist" type="range" min="0" max="100" value="32">
+            <span id="distVal">0.32d</span>
+          </div>
+        </div>
+
+        <div class="result">
+          <div><span>条件</span><strong id="condition">\(x\le \dfrac l2\sin\theta\)</strong></div>
+          <div><span>投影</span><strong id="projVal">--</strong></div>
+          <div><span>判断</span><strong id="hitVal">--</strong></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>二、为什么会出现 π？</h2>
+        <p>因为针是随机旋转的。所有可能的角度形成一个连续区间，角度变量的总长度是：</p>
+        <div class="math">\[0\le \theta\le \dfrac{\pi}{2}\]</div>
+        <p>针能碰线，取决于针的一半在“垂直方向”上的投影：</p>
+        <div class="math">\[\text{垂直投影}=\dfrac l2\sin\theta\]</div>
+        <p>当中心离最近的线不超过这个投影时，针就会碰线：</p>
+        <div class="math">\[x\le \dfrac l2\sin\theta\]</div>
+        <h3>像古典音乐一样理解</h3>
+        <p>θ 像旋律的方向，x 像音符离五线谱线的距离。旋律越“竖起来”，针的垂直投影越大，越容易触线。🎻</p>
+      </section>
+    </div>
+
+    <section class="two-col">
+      <div class="card">
+        <h2>三、面积法推导</h2>
+        <div class="step">
+          <div class="num">1</div>
+          <div>
+            <h3>样本空间</h3>
+            <p>所有可能情况构成矩形：</p>
+            <div class="math">0 ≤ x ≤ d/2，\[0\le \theta\le \dfrac{\pi}{2}\]</div>
+            <div class="math">\[\text{总面积}=\dfrac d2\cdot\dfrac{\pi}{2}=\dfrac{\pi d}{4}\]</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div>
+            <h3>成功区域</h3>
+            <p>碰线条件为：</p>
+            <div class="math">\[x\le \dfrac l2\sin\theta\]</div>
+            <p>所以成功面积是曲线下面的面积：</p>
+            <div class="math">\[\int_0^{\pi/2}\dfrac l2\sin\theta\,d\theta=\dfrac l2\]</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <div>
+            <h3>概率 = 成功面积 / 总面积</h3>
+            <div class="math">\[P=\dfrac{l/2}{\pi d/4}=\dfrac{2l}{\pi d}\]</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>四、蒙特卡洛实验</h2>
+        <p>点击按钮随机投针。红色表示碰线，绿色表示没有碰线。投得越多，实验概率越接近理论值。</p>
+        <div class="controls">
+          <div class="control-row">
+            <label>针长 l/d</label>
+            <input id="ratio" type="range" min="10" max="95" value="65">
+            <span id="ratioVal">0.65</span>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button id="throw100">投 100 次</button>
+            <button id="throw1000">投 1000 次</button>
+            <button class="secondary" id="reset">清空</button>
+          </div>
+        </div>
+        <div class="sim-area" id="simArea"></div>
+        <div class="result">
+          <div><span>总次数</span><strong id="total">0</strong></div>
+          <div><span>实验概率</span><strong id="expP">0</strong></div>
+          <div><span>理论概率</span><strong id="theoryP">0.414</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="footer">
+      <h2 style="color:#e8c978">教学总结</h2>
+      <p>布丰投针问题的美感在于：一个看似普通的随机实验，背后藏着几何投影、积分面积和圆周率 π。它适合用来连接小学“可能性”、初中“几何投影”、高中“函数与积分”、大学“概率论与蒙特卡洛模拟”。</p>
+      <p class="small">公式适用前提：针长 l 小于平行线间距 d。若 l ≥ d，概率公式需要分段修正。</p>
+    </section>
+  </main>
+</div>
+
+<script>
+const stage = document.getElementById('stage');
+const needle = document.getElementById('needle');
+const projection = document.getElementById('projection');
+const angle = document.getElementById('angle');
+const dist = document.getElementById('dist');
+const angleVal = document.getElementById('angleVal');
+const distVal = document.getElementById('distVal');
+const projVal = document.getElementById('projVal');
+const hitVal = document.getElementById('hitVal');
+
+const L_RATIO = 0.65;
+
+function drawLines(){
+  stage.querySelectorAll('.line').forEach(e=>e.remove());
+  const h = stage.clientHeight;
+  const dpx = 170;
+  const mid = h/2;
+  for(let y=mid-2*dpx; y<=mid+2*dpx; y+=dpx){
+    const line = document.createElement('div');
+    line.className = 'line';
+    line.style.top = y + 'px';
+    stage.appendChild(line);
+  }
+}
+function updateNeedle(){
+  drawLines();
+  const theta = Number(angle.value);
+  const xRatio = Number(dist.value)/100 * .5;
+  const h = stage.clientHeight;
+  const dpx = 170;
+  const centerY = h/2 + xRatio*dpx;
+  needle.style.top = centerY + 'px';
+  needle.style.transform = `translate(-50%,-50%) rotate(${theta}deg)`;
+  document.querySelector('.center-dot').style.top = centerY + 'px';
+  projection.style.top = centerY + 'px';
+
+  // 视觉针长 = 数学针长：l = L_RATIO · d
+  // 这样“看见的针”和“判定公式”完全一致。
+  needle.style.width = (L_RATIO * dpx) + 'px';
+
+  const halfProjectionRatio = (L_RATIO/2) * Math.sin(theta*Math.PI/180);
+  const halfProjectionPx = halfProjectionRatio*dpx;
+  projection.style.height = Math.max(0, halfProjectionPx) + 'px';
+  projection.style.transform = 'translateX(-50%) translateY(-100%)';
+
+  const hit = xRatio <= halfProjectionRatio + 1e-9;
+  needle.classList.toggle('hit',hit);
+
+  angleVal.textContent = theta + '°';
+  distVal.textContent = xRatio.toFixed(2) + 'd';
+  projVal.textContent = halfProjectionRatio.toFixed(3) + 'd';
+  hitVal.textContent = hit ? '碰到线 ✓' : '未碰到';
+  hitVal.style.color = hit ? '#6f1d1b' : '#243d2a';
+}
+angle.addEventListener('input',updateNeedle);
+dist.addEventListener('input',updateNeedle);
+window.addEventListener('resize',updateNeedle);
+
+const simArea = document.getElementById('simArea');
+const ratio = document.getElementById('ratio');
+const ratioVal = document.getElementById('ratioVal');
+const totalEl = document.getElementById('total');
+const expPEl = document.getElementById('expP');
+const theoryPEl = document.getElementById('theoryP');
+let total = 0, hits = 0;
+
+function drawSimLines(){
+  simArea.querySelectorAll('.sim-line').forEach(e=>e.remove());
+  const h = simArea.clientHeight;
+  const dpx = 70;
+  for(let y=35; y<h; y+=dpx){
+    const line = document.createElement('div');
+    line.className='sim-line';
+    line.style.top=y+'px';
+    simArea.appendChild(line);
+  }
+}
+function updateTheory(){
+  const r = Number(ratio.value)/100;
+  ratioVal.textContent = r.toFixed(2);
+  theoryPEl.textContent = (2*r/Math.PI).toFixed(3);
+}
+function throwNeedles(n){
+  drawSimLines();
+  const r = Number(ratio.value)/100;
+  const dpx = 70;
+  const w = simArea.clientWidth;
+  const h = simArea.clientHeight;
+  const frag = document.createDocumentFragment();
+  const keep = 230;
+  for(let i=0;i<n;i++){
+    const theta = Math.random()*Math.PI/2;
+    const x = Math.random()*0.5;
+    const hit = x <= (r/2)*Math.sin(theta);
+    total++;
+    if(hit) hits++;
+    if(i > n-keep && n<=1000){
+      const el = document.createElement('div');
+      el.className = 'sim-needle' + (hit?'':' miss');
+      const yBase = 35 + Math.floor(Math.random()*4)*dpx;
+      const sign = Math.random()<.5?-1:1;
+      const y = yBase + sign*x*dpx;
+      el.style.left = (Math.random()*(w-45)+20)+'px';
+      el.style.top = Math.min(h-8,Math.max(4,y))+'px';
+      el.style.width = (r*dpx)+'px';
+      el.style.transform = `rotate(${theta*180/Math.PI}deg)`;
+      frag.appendChild(el);
+    }
+  }
+  simArea.appendChild(frag);
+  const needles = Array.from(simArea.querySelectorAll('.sim-needle'));
+  if(needles.length>260) needles.slice(0, needles.length-260).forEach(e=>e.remove());
+  totalEl.textContent = total;
+  expPEl.textContent = (hits/total).toFixed(3);
+}
+document.getElementById('throw100').onclick=()=>throwNeedles(100);
+document.getElementById('throw1000').onclick=()=>throwNeedles(1000);
+document.getElementById('reset').onclick=()=>{
+  total=0;hits=0;
+  simArea.querySelectorAll('.sim-needle').forEach(e=>e.remove());
+  totalEl.textContent='0'; expPEl.textContent='0';
+};
+ratio.addEventListener('input',()=>{updateTheory();});
+drawSimLines();
+updateTheory();
+updateNeedle();
+</script>
+</body>
+</html>
